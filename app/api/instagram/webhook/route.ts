@@ -1,4 +1,35 @@
+import { createHmac, timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
+import { supabaseAdmin } from "@/lib/supabase-admin";
+
+function verifyInstagramSignature(
+  rawBody: string,
+  signatureHeader: string | null,
+  appSecret: string
+) {
+  if (!signatureHeader) {
+    return false;
+  }
+
+  const [algorithm, receivedSignature] = signatureHeader.split("=");
+
+  if (algorithm !== "sha256" || !receivedSignature) {
+    return false;
+  }
+
+  const expectedSignature = createHmac("sha256", appSecret)
+    .update(rawBody, "utf8")
+    .digest("hex");
+
+  const received = Buffer.from(receivedSignature, "utf8");
+  const expected = Buffer.from(expectedSignature, "utf8");
+
+  if (received.length !== expected.length) {
+    return false;
+  }
+
+  return timingSafeEqual(received, expected);
+}
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -31,12 +62,68 @@ export async function GET(request: Request) {
   );
 }
 
-export async function POST() {
-  return NextResponse.json(
-    {
-      ok: false,
-      message: "Recebimento de eventos ainda não configurado.",
-    },
-    { status: 501 }
-  );
+export async function POST(request: Request) {
+  const rawBody = await request.text();
+  const appSecret = process.env.INSTAGRAM_APP_SECRET;
+
+  if (!appSecret) {
+    return NextResponse.json(
+      {
+        ok: false,
+        message: "INSTAGRAM_APP_SECRET não configurado.",
+      },
+      { status: 500 }
+    );
+  }
+
+  const signature = request.headers.get("x-hub-signature-256");
+
+  if (!verifyInstagramSignature(rawBody, signature, appSecret)) {
+    return NextResponse.json(
+      {
+        ok: false,
+        message: "Assinatura do webhook inválida.",
+      },
+      { status: 401 }
+    );
+  }
+
+  let payload: unknown;
+
+  try {
+    payload = JSON.parse(rawBody);
+  } catch {
+    return NextResponse.json(
+      {
+        ok: false,
+        message: "Payload JSON inválido.",
+      },
+      { status: 400 }
+    );
+  }
+
+  const { error } = await supabaseAdmin
+    .from("events")
+    .insert({
+      source: "instagram",
+      event_type: "webhook",
+      payload,
+      processed: false,
+    });
+
+  if (error) {
+    console.error("Erro ao registrar evento do Instagram:", error);
+
+    return NextResponse.json(
+      {
+        ok: false,
+        message: "Não foi possível registrar o evento.",
+      },
+      { status: 500 }
+    );
+  }
+
+  return NextResponse.json({
+    ok: true,
+  });
 }
