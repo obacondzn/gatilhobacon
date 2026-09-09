@@ -53,6 +53,7 @@ export default function Home() {
     personality: "Criativo, descontraído e brasileiro.",
     instructions: "Fale como eu falaria.",
   });
+
   const [aiConfigLoading, setAiConfigLoading] = useState(false);
   const [aiConfigMessage, setAiConfigMessage] = useState("");
 
@@ -113,7 +114,9 @@ export default function Home() {
     try {
       const res = await fetch("/api/ai-config", {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify(aiConfig),
       });
 
@@ -121,7 +124,8 @@ export default function Home() {
 
       if (!res.ok || !data.ok) {
         setAiConfigMessage(
-          data.message || "Não foi possível salvar a configuração da IA."
+          data.message ||
+            "Não foi possível salvar a configuração da IA."
         );
         return;
       }
@@ -395,14 +399,24 @@ export default function Home() {
             <div className="text-xl font-extrabold tracking-tight">
               Gatilho
             </div>
+
             <div className="mt-0.5 text-[13px] text-muted">
               Automação para Instagram
             </div>
           </div>
 
-          <div className="flex items-center gap-2 text-[13px] text-muted">
-            <span className="h-1.5 w-1.5 rounded-full bg-ok" />
-            Instagram conectado
+          <div className="flex items-center gap-6">
+            <a
+              href="/pessoas"
+              className="text-[13px] font-semibold text-muted underline decoration-line underline-offset-4 transition-colors hover:text-ink"
+            >
+              Pessoas
+            </a>
+
+            <div className="flex items-center gap-2 text-[13px] text-muted">
+              <span className="h-1.5 w-1.5 rounded-full bg-ok" />
+              Instagram conectado
+            </div>
           </div>
         </div>
       </header>
@@ -422,9 +436,20 @@ export default function Home() {
           </p>
 
           <div className="mt-10 grid grid-cols-3 divide-x divide-line border-y border-line">
-            <StatBlock title="Eventos recebidos" value={events.length} />
-            <StatBlock title="Pendentes" value={pending} />
-            <StatBlock title="Processados" value={processed} />
+            <StatBlock
+              title="Eventos recebidos"
+              value={events.length}
+            />
+
+            <StatBlock
+              title="Pendentes"
+              value={pending}
+            />
+
+            <StatBlock
+              title="Processados"
+              value={processed}
+            />
           </div>
         </section>
 
@@ -433,7 +458,9 @@ export default function Home() {
           <div>
             <div className="flex items-start justify-between gap-4">
               <h2 className="text-xl font-bold tracking-tight">
-                {editingId ? "Editar automação" : "Nova automação"}
+                {editingId
+                  ? "Editar automação"
+                  : "Nova automação"}
               </h2>
 
               {editingId && (
@@ -451,7 +478,10 @@ export default function Home() {
               Defina o comportamento quando alguém comentar.
             </p>
 
-            <form onSubmit={saveAutomation} className="mt-8 space-y-6">
+            <form
+              onSubmit={saveAutomation}
+              className="mt-8 space-y-6"
+            >
               <label className="block">
                 <span className="text-[13px] font-medium text-ink-soft">
                   Palavra-chave
@@ -459,7 +489,9 @@ export default function Home() {
 
                 <input
                   value={keyword}
-                  onChange={(e) => setKeyword(e.target.value)}
+                  onChange={(e) =>
+                    setKeyword(e.target.value)
+                  }
                   placeholder="Ex: Efeito"
                   className="mt-2 w-full border border-line bg-surface px-3.5 py-3 text-[15px] outline-none transition-colors focus:border-ink"
                 />
@@ -468,12 +500,15 @@ export default function Home() {
               <label className="block">
                 <span className="text-[13px] font-medium text-ink-soft">
                   Resposta no comentário
-                  {aiMode && " (fallback se a IA falhar)"}
+                  {aiMode &&
+                    " (fallback se a IA falhar)"}
                 </span>
 
                 <textarea
                   value={response}
-                  onChange={(e) => setResponse(e.target.value)}
+                  onChange={(e) =>
+                    setResponse(e.target.value)
+                  }
                   rows={3}
                   placeholder="Digite a resposta pública..."
                   className="mt-2 w-full resize-none border border-line bg-surface px-3.5 py-3 text-[15px] outline-none transition-colors focus:border-ink"
@@ -486,6 +521,7 @@ export default function Home() {
                     <div className="text-[14px] font-semibold">
                       Responder com IA
                     </div>
+
                     <div className="mt-1 text-[13px] text-muted">
                       A resposta é gerada pelo Gemini a partir do contexto
                       real da conversa, em vez de um texto fixo.
@@ -494,7 +530,9 @@ export default function Home() {
 
                   <button
                     type="button"
-                    onClick={() => setAiMode(!aiMode)}
+                    onClick={() =>
+                      setAiMode(!aiMode)
+                    }
                     aria-pressed={aiMode}
                     className={`relative h-5 w-9 shrink-0 border transition-colors ${
                       aiMode
@@ -521,7 +559,11 @@ export default function Home() {
 
                       <textarea
                         value={aiSystemPrompt}
-                        onChange={(e) => setAiSystemPrompt(e.target.value)}
+                        onChange={(e) =>
+                          setAiSystemPrompt(
+                            e.target.value
+                          )
+                        }
                         rows={3}
                         placeholder="Ex: fale sobre o efeito de edição que a pessoa comentou, sem mencionar preço."
                         className="mt-2 w-full resize-none border border-line bg-paper px-3.5 py-3 text-[15px] outline-none transition-colors focus:border-ink"
@@ -542,6 +584,7 @@ export default function Home() {
                     <div className="text-[14px] font-semibold">
                       Mensagem direta
                     </div>
+
                     <div className="mt-1 text-[13px] text-muted">
                       Envie uma DM automaticamente para quem comentar.
                     </div>
@@ -549,7 +592,9 @@ export default function Home() {
 
                   <button
                     type="button"
-                    onClick={() => setDmEnabled(!dmEnabled)}
+                    onClick={() =>
+                      setDmEnabled(!dmEnabled)
+                    }
                     aria-pressed={dmEnabled}
                     className={`relative h-5 w-9 shrink-0 border transition-colors ${
                       dmEnabled
@@ -576,7 +621,9 @@ export default function Home() {
 
                       <textarea
                         value={dmReply}
-                        onChange={(e) => setDmReply(e.target.value)}
+                        onChange={(e) =>
+                          setDmReply(e.target.value)
+                        }
                         rows={4}
                         placeholder="Digite a mensagem que será enviada..."
                         className="mt-2 w-full resize-none border border-line bg-paper px-3.5 py-3 text-[15px] outline-none transition-colors focus:border-ink"
@@ -616,9 +663,11 @@ export default function Home() {
                 <h2 className="text-xl font-bold tracking-tight">
                   Fluxo ativo
                 </h2>
+
                 <p className="mt-1 text-[13px] text-muted">
                   Comentário → palavra-chave → resposta
-                  {activeAutomation?.dm_enabled && " → DM"}
+                  {activeAutomation?.dm_enabled &&
+                    " → DM"}
                 </p>
               </div>
 
@@ -636,12 +685,19 @@ export default function Home() {
                 title="Comentário"
                 text={latestComment?.text || "Efeito"}
               />
+
               <FlowArrow />
+
               <FlowStep
                 title="Palavra-chave"
-                text={activeAutomation?.keywords?.[0] || "Efeito"}
+                text={
+                  activeAutomation?.keywords?.[0] ||
+                  "Efeito"
+                }
               />
+
               <FlowArrow />
+
               <FlowStep
                 title="Resposta"
                 text={
@@ -653,16 +709,25 @@ export default function Home() {
 
             {activeAutomation?.dm_enabled && (
               <div className="mt-3 flex items-center gap-3">
-                <span className="pl-1 text-faint">↓</span>
+                <span className="pl-1 text-faint">
+                  ↓
+                </span>
+
                 <FlowStep
                   title="Mensagem direta"
-                  text={activeAutomation.dm_reply || "Mensagem direta"}
+                  text={
+                    activeAutomation.dm_reply ||
+                    "Mensagem direta"
+                  }
                 />
               </div>
             )}
 
             <div className="mt-8 border-t border-line pt-6 text-[13px]">
-              <span className="font-semibold">Conta profissional</span>
+              <span className="font-semibold">
+                Conta profissional
+              </span>
+
               <span className="text-muted">
                 {" "}
                 — Instagram conectado, pronta para receber eventos.
@@ -676,6 +741,7 @@ export default function Home() {
           <h2 className="text-xl font-bold tracking-tight">
             Configuração da IA
           </h2>
+
           <p className="mt-1 text-[13px] text-muted">
             Tom e personalidade usados em toda automação com IA ativada.
           </p>
@@ -688,10 +754,14 @@ export default function Home() {
               <span className="text-[13px] font-medium text-ink-soft">
                 Tom
               </span>
+
               <input
                 value={aiConfig.tone}
                 onChange={(e) =>
-                  setAiConfig({ ...aiConfig, tone: e.target.value })
+                  setAiConfig({
+                    ...aiConfig,
+                    tone: e.target.value,
+                  })
                 }
                 placeholder="Ex: Informal"
                 className="mt-2 w-full border border-line bg-surface px-3.5 py-3 text-[15px] outline-none transition-colors focus:border-ink"
@@ -702,10 +772,14 @@ export default function Home() {
               <span className="text-[13px] font-medium text-ink-soft">
                 Personalidade
               </span>
+
               <input
                 value={aiConfig.personality}
                 onChange={(e) =>
-                  setAiConfig({ ...aiConfig, personality: e.target.value })
+                  setAiConfig({
+                    ...aiConfig,
+                    personality: e.target.value,
+                  })
                 }
                 placeholder="Ex: Criativo, descontraído e brasileiro."
                 className="mt-2 w-full border border-line bg-surface px-3.5 py-3 text-[15px] outline-none transition-colors focus:border-ink"
@@ -716,10 +790,14 @@ export default function Home() {
               <span className="text-[13px] font-medium text-ink-soft">
                 Instruções
               </span>
+
               <textarea
                 value={aiConfig.instructions}
                 onChange={(e) =>
-                  setAiConfig({ ...aiConfig, instructions: e.target.value })
+                  setAiConfig({
+                    ...aiConfig,
+                    instructions: e.target.value,
+                  })
                 }
                 rows={3}
                 placeholder="Ex: Fale como eu falaria."
@@ -733,7 +811,9 @@ export default function Home() {
                 disabled={aiConfigLoading}
                 className="border border-line px-4 py-2.5 text-[13px] font-bold uppercase tracking-wide transition-colors hover:border-ink disabled:opacity-50"
               >
-                {aiConfigLoading ? "Salvando..." : "Salvar configuração"}
+                {aiConfigLoading
+                  ? "Salvando..."
+                  : "Salvar configuração"}
               </button>
 
               {aiConfigMessage && (
@@ -751,9 +831,12 @@ export default function Home() {
             <h2 className="text-xl font-bold tracking-tight">
               Minhas automações
             </h2>
+
             <span className="text-[13px] text-muted">
               {automations.length}{" "}
-              {automations.length === 1 ? "automação" : "automações"}
+              {automations.length === 1
+                ? "automação"
+                : "automações"}
             </span>
           </div>
 
@@ -775,11 +858,17 @@ export default function Home() {
                       </span>
 
                       <Tag>
-                        {automation.keywords?.[0] || "sem palavra-chave"}
+                        {automation.keywords?.[0] ||
+                          "sem palavra-chave"}
                       </Tag>
 
-                      {automation.ai_mode && <Tag>IA ativada</Tag>}
-                      {automation.dm_enabled && <Tag>DM ativada</Tag>}
+                      {automation.ai_mode && (
+                        <Tag>IA ativada</Tag>
+                      )}
+
+                      {automation.dm_enabled && (
+                        <Tag>DM ativada</Tag>
+                      )}
                     </div>
 
                     <div className="mt-2 text-[14px] text-muted">
@@ -788,20 +877,24 @@ export default function Home() {
                           (automation.static_reply
                             ? ` · fallback: ${automation.static_reply}`
                             : "")
-                        : automation.static_reply || "Sem resposta configurada"}
+                        : automation.static_reply ||
+                          "Sem resposta configurada"}
                     </div>
 
-                    {automation.dm_enabled && automation.dm_reply && (
-                      <div className="mt-1 text-[12px] text-faint">
-                        DM: {automation.dm_reply}
-                      </div>
-                    )}
+                    {automation.dm_enabled &&
+                      automation.dm_reply && (
+                        <div className="mt-1 text-[12px] text-faint">
+                          DM: {automation.dm_reply}
+                        </div>
+                      )}
                   </div>
 
                   <div className="flex shrink-0 gap-2">
                     <button
                       type="button"
-                      onClick={() => editAutomation(automation)}
+                      onClick={() =>
+                        editAutomation(automation)
+                      }
                       disabled={loading}
                       className="border border-line px-4 py-2 text-[13px] font-bold uppercase tracking-wide transition-colors hover:border-ink disabled:opacity-50"
                     >
@@ -810,7 +903,9 @@ export default function Home() {
 
                     <button
                       type="button"
-                      onClick={() => deleteAutomation(automation)}
+                      onClick={() =>
+                        deleteAutomation(automation)
+                      }
                       disabled={loading}
                       className="border border-line px-4 py-2 text-[13px] font-bold uppercase tracking-wide text-bad transition-colors hover:border-bad disabled:opacity-50"
                     >
@@ -839,9 +934,11 @@ export default function Home() {
                 const value =
                   event.payload?.entry?.[0]?.changes?.[0]?.value;
 
-                const result = event.processing_result;
+                const result =
+                  event.processing_result;
 
-                const dmSent = result?.dm?.sent === true;
+                const dmSent =
+                  result?.dm?.sent === true;
 
                 const commentSent =
                   result?.comment_reply?.sent === true;
@@ -859,22 +956,37 @@ export default function Home() {
                       </div>
 
                       <div className="truncate text-[14px] text-muted">
-                        {value?.text || "Evento recebido"}
+                        {value?.text ||
+                          "Evento recebido"}
                       </div>
 
-                      {event.processed && result && (
-                        <div className="mt-2 flex flex-wrap gap-2">
-                          {commentSent && <Tag tone="ok">Comentário respondido</Tag>}
-                          {dmSent && <Tag tone="ok">DM enviada</Tag>}
-                        </div>
-                      )}
+                      {event.processed &&
+                        result && (
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            {commentSent && (
+                              <Tag tone="ok">
+                                Comentário respondido
+                              </Tag>
+                            )}
+
+                            {dmSent && (
+                              <Tag tone="ok">
+                                DM enviada
+                              </Tag>
+                            )}
+                          </div>
+                        )}
                     </div>
 
                     <div className="shrink-0 text-left md:text-right">
-                      <StatusLabel processed={event.processed} />
+                      <StatusLabel
+                        processed={event.processed}
+                      />
 
                       <div className="mt-1 text-[12px] text-faint">
-                        {new Date(event.created_at).toLocaleString("pt-BR")}
+                        {new Date(
+                          event.created_at
+                        ).toLocaleString("pt-BR")}
                       </div>
                     </div>
                   </div>
@@ -888,10 +1000,19 @@ export default function Home() {
   );
 }
 
-function StatBlock({ title, value }: { title: string; value: number }) {
+function StatBlock({
+  title,
+  value,
+}: {
+  title: string;
+  value: number;
+}) {
   return (
     <div className="px-0 py-6 first:pl-0 md:px-6">
-      <div className="text-[13px] text-muted">{title}</div>
+      <div className="text-[13px] text-muted">
+        {title}
+      </div>
+
       <div className="mt-2 text-4xl font-extrabold tracking-tight md:text-5xl">
         {value}
       </div>
@@ -899,20 +1020,32 @@ function StatBlock({ title, value }: { title: string; value: number }) {
   );
 }
 
-function FlowStep({ title, text }: { title: string; text: string }) {
+function FlowStep({
+  title,
+  text,
+}: {
+  title: string;
+  text: string;
+}) {
   return (
     <div className="min-w-[9rem] flex-1 border border-line p-4">
       <div className="text-[11px] font-semibold uppercase tracking-wide text-faint">
         {title}
       </div>
-      <div className="mt-2 truncate text-[14px] font-medium">{text}</div>
+
+      <div className="mt-2 truncate text-[14px] font-medium">
+        {text}
+      </div>
     </div>
   );
 }
 
 function FlowArrow() {
   return (
-    <span className="flex items-center text-faint" aria-hidden>
+    <span
+      className="flex items-center text-faint"
+      aria-hidden
+    >
       →
     </span>
   );
@@ -938,19 +1071,30 @@ function Tag({
   );
 }
 
-function StatusLabel({ processed }: { processed: boolean }) {
+function StatusLabel({
+  processed,
+}: {
+  processed: boolean;
+}) {
   return (
     <span
       className={`inline-flex items-center gap-1.5 text-[12px] font-semibold uppercase tracking-wide ${
-        processed ? "text-ok" : "text-warn"
+        processed
+          ? "text-ok"
+          : "text-warn"
       }`}
     >
       <span
         className={`h-1.5 w-1.5 rounded-full ${
-          processed ? "bg-ok" : "bg-warn"
+          processed
+            ? "bg-ok"
+            : "bg-warn"
         }`}
       />
-      {processed ? "Processado" : "Pendente"}
+
+      {processed
+        ? "Processado"
+        : "Pendente"}
     </span>
   );
 }
