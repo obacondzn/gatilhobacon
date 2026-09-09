@@ -1,6 +1,7 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { processPendingEvents } from "@/lib/processor";
 
 function verifyInstagramSignature(
   rawBody: string,
@@ -123,7 +124,13 @@ export async function POST(request: Request) {
     );
   }
 
-  return NextResponse.json({
-    ok: true,
-  });
+  // O evento já está persistido. Processamos em seguida, mas uma falha na
+  // automação não impede o webhook de responder 200 para a Meta.
+  try {
+    await processPendingEvents(10);
+  } catch (error) {
+    console.error("Erro ao processar evento do Instagram:", error);
+  }
+
+  return NextResponse.json({ ok: true });
 }
