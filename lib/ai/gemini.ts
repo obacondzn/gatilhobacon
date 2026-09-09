@@ -12,7 +12,7 @@ import "server-only";
  * NUNCA é exposta no client, em logs, ou em respostas de erro.
  */
 
-const GEMINI_MODEL = "gemini-flash-latest";
+const GEMINI_MODEL = "gemini-3.5-flash-lite";
 
 const GEMINI_URL =
   `https://generativelanguage.googleapis.com/v1beta/models/` +
@@ -228,10 +228,9 @@ export async function generateAIReply(
           },
         ],
         generationConfig: {
-          responseMimeType: "application/json",
-          responseSchema: RESPONSE_SCHEMA,
-          temperature: 0.9,
-        },
+  responseMimeType: "application/json",
+  temperature: 0.9,
+          },
       }),
       cache: "no-store",
     });

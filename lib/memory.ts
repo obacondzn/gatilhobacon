@@ -194,14 +194,15 @@ export async function recordMessage(params: {
   }
 
   const { error } = await supabaseAdmin.from("conversation_messages").insert({
-    conversation_id: conversationId,
-    contact_id: contactId,
-    direction,
-    message_id: messageId ?? null,
-    text,
-    source,
-    metadata: metadata ?? {},
-  });
+  conversation_id: conversationId,
+  contact_id: contactId,
+  direction,
+  message_id: messageId ?? null,
+  content: text,
+  text,
+  source,
+  metadata: metadata ?? {},
+});
 
   // 23505 = unique_violation (mensagem já registrada) -> ignorar,
   // idempotente por design (retries do processor não duplicam).
