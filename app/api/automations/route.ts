@@ -75,7 +75,27 @@ export async function POST(
         ).trim()
       : null;
 
-    if (!keyword || !response) {
+    const aiMode = body?.ai_mode === true;
+
+    const aiSystemPrompt = aiMode
+      ? String(body?.ai_system_prompt || "").trim() || null
+      : null;
+
+    if (!keyword) {
+      return NextResponse.json(
+        {
+          ok: false,
+          message: "Palavra-chave é obrigatória.",
+        },
+        { status: 400 }
+      );
+    }
+
+    // Quando a IA está ativa, a resposta pública é gerada
+    // dinamicamente. static_reply continua sendo obrigatória apenas
+    // como fallback quando ai_mode está desligado (compatibilidade
+    // com automações antigas).
+    if (!aiMode && !response) {
       return NextResponse.json(
         {
           ok: false,
@@ -86,7 +106,7 @@ export async function POST(
       );
     }
 
-    if (dmEnabled && !dmReply) {
+    if (dmEnabled && !aiMode && !dmReply) {
       return NextResponse.json(
         {
           ok: false,
@@ -113,11 +133,11 @@ export async function POST(
 
           match_mode: "contains",
 
-          ai_mode: false,
+          ai_mode: aiMode,
 
-          static_reply: response,
+          static_reply: response || null,
 
-          ai_system_prompt: null,
+          ai_system_prompt: aiSystemPrompt,
 
           qualifier_id: null,
 
@@ -195,6 +215,12 @@ export async function PUT(
         ).trim()
       : null;
 
+    const aiMode = body?.ai_mode === true;
+
+    const aiSystemPrompt = aiMode
+      ? String(body?.ai_system_prompt || "").trim() || null
+      : null;
+
     if (!id) {
       return NextResponse.json(
         {
@@ -206,7 +232,17 @@ export async function PUT(
       );
     }
 
-    if (!keyword || !response) {
+    if (!keyword) {
+      return NextResponse.json(
+        {
+          ok: false,
+          message: "Palavra-chave é obrigatória.",
+        },
+        { status: 400 }
+      );
+    }
+
+    if (!aiMode && !response) {
       return NextResponse.json(
         {
           ok: false,
@@ -217,7 +253,7 @@ export async function PUT(
       );
     }
 
-    if (dmEnabled && !dmReply) {
+    if (dmEnabled && !aiMode && !dmReply) {
       return NextResponse.json(
         {
           ok: false,
@@ -234,7 +270,11 @@ export async function PUT(
         .update({
           keywords: [keyword],
 
-          static_reply: response,
+          static_reply: response || null,
+
+          ai_mode: aiMode,
+
+          ai_system_prompt: aiSystemPrompt,
 
           dm_enabled: dmEnabled,
 

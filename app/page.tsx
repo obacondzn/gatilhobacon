@@ -12,6 +12,14 @@ type Automation = {
   active: boolean;
   dm_enabled: boolean;
   dm_reply: string | null;
+  ai_mode: boolean;
+  ai_system_prompt: string | null;
+};
+
+type AIConfig = {
+  tone: string;
+  personality: string;
+  instructions: string;
 };
 
 type Event = {
@@ -32,27 +40,46 @@ export default function Home() {
   const [dmEnabled, setDmEnabled] = useState(false);
   const [dmReply, setDmReply] = useState("");
 
+  const [aiMode, setAiMode] = useState(false);
+  const [aiSystemPrompt, setAiSystemPrompt] = useState("");
+
   const [editingId, setEditingId] = useState<string | null>(null);
 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
+  const [aiConfig, setAiConfig] = useState<AIConfig>({
+    tone: "Informal",
+    personality: "Criativo, descontraído e brasileiro.",
+    instructions: "Fale como eu falaria.",
+  });
+  const [aiConfigLoading, setAiConfigLoading] = useState(false);
+  const [aiConfigMessage, setAiConfigMessage] = useState("");
+
   async function load() {
     try {
-      const [a, e] = await Promise.all([
+      const [a, e, c] = await Promise.all([
         fetch("/api/automations", {
           cache: "no-store",
         }),
         fetch("/api/events", {
           cache: "no-store",
         }),
+        fetch("/api/ai-config", {
+          cache: "no-store",
+        }),
       ]);
 
       const aj = await a.json();
       const ej = await e.json();
+      const cj = await c.json();
 
       setAutomations(aj.automations ?? []);
       setEvents(ej.events ?? []);
+
+      if (cj?.config) {
+        setAiConfig(cj.config);
+      }
     } catch (error) {
       console.error(error);
       setMessage("Erro ao carregar dados.");
@@ -73,6 +100,40 @@ export default function Home() {
     setResponse("");
     setDmEnabled(false);
     setDmReply("");
+    setAiMode(false);
+    setAiSystemPrompt("");
+  }
+
+  async function saveAiConfig(e: React.FormEvent) {
+    e.preventDefault();
+
+    setAiConfigLoading(true);
+    setAiConfigMessage("");
+
+    try {
+      const res = await fetch("/api/ai-config", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(aiConfig),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.ok) {
+        setAiConfigMessage(
+          data.message || "Não foi possível salvar a configuração da IA."
+        );
+        return;
+      }
+
+      setAiConfig(data.config);
+      setAiConfigMessage("Configuração da IA salva.");
+    } catch (error) {
+      console.error(error);
+      setAiConfigMessage("Erro ao salvar a configuração da IA.");
+    } finally {
+      setAiConfigLoading(false);
+    }
   }
 
   function editAutomation(automation: Automation) {
@@ -92,6 +153,14 @@ export default function Home() {
 
     setDmReply(
       automation.dm_reply ?? ""
+    );
+
+    setAiMode(
+      automation.ai_mode ?? false
+    );
+
+    setAiSystemPrompt(
+      automation.ai_system_prompt ?? ""
     );
 
     setMessage("");
@@ -165,14 +234,22 @@ export default function Home() {
     const cleanDmReply =
       dmReply.trim();
 
-    if (!cleanKeyword || !cleanResponse) {
+    const cleanAiSystemPrompt =
+      aiSystemPrompt.trim();
+
+    if (!cleanKeyword) {
+      setMessage("Palavra-chave é obrigatória.");
+      return;
+    }
+
+    if (!aiMode && !cleanResponse) {
       setMessage(
         "Palavra-chave e resposta são obrigatórias."
       );
       return;
     }
 
-    if (dmEnabled && !cleanDmReply) {
+    if (dmEnabled && !aiMode && !cleanDmReply) {
       setMessage(
         "Digite a mensagem direta."
       );
@@ -194,6 +271,10 @@ export default function Home() {
         dm_enabled: dmEnabled,
         dm_reply: dmEnabled
           ? cleanDmReply
+          : null,
+        ai_mode: aiMode,
+        ai_system_prompt: aiMode
+          ? cleanAiSystemPrompt
           : null,
       };
 
@@ -387,6 +468,7 @@ export default function Home() {
               <label className="block">
                 <span className="text-[13px] font-medium text-ink-soft">
                   Resposta no comentário
+                  {aiMode && " (fallback se a IA falhar)"}
                 </span>
 
                 <textarea
@@ -397,6 +479,62 @@ export default function Home() {
                   className="mt-2 w-full resize-none border border-line bg-surface px-3.5 py-3 text-[15px] outline-none transition-colors focus:border-ink"
                 />
               </label>
+
+              <div className="border border-line p-4">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <div className="text-[14px] font-semibold">
+                      Responder com IA
+                    </div>
+                    <div className="mt-1 text-[13px] text-muted">
+                      A resposta é gerada pelo Gemini a partir do contexto
+                      real da conversa, em vez de um texto fixo.
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setAiMode(!aiMode)}
+                    aria-pressed={aiMode}
+                    className={`relative h-5 w-9 shrink-0 border transition-colors ${
+                      aiMode
+                        ? "border-ink bg-ink"
+                        : "border-line-strong bg-transparent"
+                    }`}
+                  >
+                    <span
+                      className={`absolute top-0.5 h-3.5 w-3.5 transition-transform ${
+                        aiMode
+                          ? "translate-x-4 bg-paper"
+                          : "translate-x-0.5 bg-ink-soft"
+                      }`}
+                    />
+                  </button>
+                </div>
+
+                {aiMode && (
+                  <div className="mt-4">
+                    <label className="block">
+                      <span className="text-[13px] font-medium text-ink-soft">
+                        Instruções específicas para este gatilho
+                      </span>
+
+                      <textarea
+                        value={aiSystemPrompt}
+                        onChange={(e) => setAiSystemPrompt(e.target.value)}
+                        rows={3}
+                        placeholder="Ex: fale sobre o efeito de edição que a pessoa comentou, sem mencionar preço."
+                        className="mt-2 w-full resize-none border border-line bg-paper px-3.5 py-3 text-[15px] outline-none transition-colors focus:border-ink"
+                      />
+                    </label>
+
+                    <p className="mt-2 text-[12px] text-faint">
+                      O tom geral e a personalidade vêm da configuração da
+                      IA, mais abaixo.
+                    </p>
+                  </div>
+                )}
+              </div>
 
               <div className="border border-line p-4">
                 <div className="flex items-center justify-between gap-4">
@@ -533,6 +671,80 @@ export default function Home() {
           </div>
         </section>
 
+        {/* CONFIGURAÇÃO DA IA */}
+        <section className="border-b border-line py-10 md:py-14">
+          <h2 className="text-xl font-bold tracking-tight">
+            Configuração da IA
+          </h2>
+          <p className="mt-1 text-[13px] text-muted">
+            Tom e personalidade usados em toda automação com IA ativada.
+          </p>
+
+          <form
+            onSubmit={saveAiConfig}
+            className="mt-8 grid gap-6 md:grid-cols-2"
+          >
+            <label className="block">
+              <span className="text-[13px] font-medium text-ink-soft">
+                Tom
+              </span>
+              <input
+                value={aiConfig.tone}
+                onChange={(e) =>
+                  setAiConfig({ ...aiConfig, tone: e.target.value })
+                }
+                placeholder="Ex: Informal"
+                className="mt-2 w-full border border-line bg-surface px-3.5 py-3 text-[15px] outline-none transition-colors focus:border-ink"
+              />
+            </label>
+
+            <label className="block">
+              <span className="text-[13px] font-medium text-ink-soft">
+                Personalidade
+              </span>
+              <input
+                value={aiConfig.personality}
+                onChange={(e) =>
+                  setAiConfig({ ...aiConfig, personality: e.target.value })
+                }
+                placeholder="Ex: Criativo, descontraído e brasileiro."
+                className="mt-2 w-full border border-line bg-surface px-3.5 py-3 text-[15px] outline-none transition-colors focus:border-ink"
+              />
+            </label>
+
+            <label className="block md:col-span-2">
+              <span className="text-[13px] font-medium text-ink-soft">
+                Instruções
+              </span>
+              <textarea
+                value={aiConfig.instructions}
+                onChange={(e) =>
+                  setAiConfig({ ...aiConfig, instructions: e.target.value })
+                }
+                rows={3}
+                placeholder="Ex: Fale como eu falaria."
+                className="mt-2 w-full resize-none border border-line bg-surface px-3.5 py-3 text-[15px] outline-none transition-colors focus:border-ink"
+              />
+            </label>
+
+            <div className="md:col-span-2">
+              <button
+                type="submit"
+                disabled={aiConfigLoading}
+                className="border border-line px-4 py-2.5 text-[13px] font-bold uppercase tracking-wide transition-colors hover:border-ink disabled:opacity-50"
+              >
+                {aiConfigLoading ? "Salvando..." : "Salvar configuração"}
+              </button>
+
+              {aiConfigMessage && (
+                <span className="ml-4 text-[13px] text-muted">
+                  {aiConfigMessage}
+                </span>
+              )}
+            </div>
+          </form>
+        </section>
+
         {/* AUTOMAÇÕES */}
         <section className="border-b border-line py-10 md:py-14">
           <div className="flex items-end justify-between gap-4">
@@ -566,11 +778,17 @@ export default function Home() {
                         {automation.keywords?.[0] || "sem palavra-chave"}
                       </Tag>
 
+                      {automation.ai_mode && <Tag>IA ativada</Tag>}
                       {automation.dm_enabled && <Tag>DM ativada</Tag>}
                     </div>
 
                     <div className="mt-2 text-[14px] text-muted">
-                      {automation.static_reply || "Sem resposta configurada"}
+                      {automation.ai_mode
+                        ? "Resposta gerada por IA" +
+                          (automation.static_reply
+                            ? ` · fallback: ${automation.static_reply}`
+                            : "")
+                        : automation.static_reply || "Sem resposta configurada"}
                     </div>
 
                     {automation.dm_enabled && automation.dm_reply && (

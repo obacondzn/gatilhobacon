@@ -3,6 +3,15 @@ import {
   INSTAGRAM_GRAPH_URL,
   INSTAGRAM_GRAPH_VERSION,
 } from "@/lib/instagram/config";
+import { generateAIReply, type AIContext } from "@/lib/ai/gemini";
+import {
+  applyAIObservations,
+  getAIConfig,
+  getConversationHistory,
+  getOrCreateContact,
+  getOrCreateConversation,
+  recordMessage,
+} from "@/lib/memory";
 
 type InstagramCommentEvent = {
   entry?: Array<{
@@ -36,6 +45,8 @@ type Automation = {
   active: boolean;
   dm_enabled: boolean;
   dm_reply: string | null;
+  ai_mode: boolean;
+  ai_system_prompt: string | null;
 };
 
 type CommentData = {
@@ -43,6 +54,7 @@ type CommentData = {
   username?: string;
   userId?: string;
   instagramUserId?: string;
+  mediaId?: string;
   text: string;
 };
 
@@ -288,6 +300,7 @@ function extractComments(
         username: value.from?.username,
         userId: value.from?.id,
         instagramUserId,
+        mediaId: value.media?.id,
         text: value.text,
       });
     }
@@ -321,7 +334,9 @@ export async function processPendingEvents(limit = 10) {
       is_active,
       active,
       dm_enabled,
-      dm_reply
+      dm_reply,
+      ai_mode,
+      ai_system_prompt
     `)
     .eq("active", true);
 
@@ -535,6 +550,58 @@ export async function processPendingEvents(limit = 10) {
         );
 
       /**
+       * ------------------------------------------------------
+       * MEMÓRIA: contato + conversa
+       * ------------------------------------------------------
+       *
+       * Registrado independente de ser automação com IA ou
+       * static_reply, para que o histórico exista de verdade
+       * caso a automação seja migrada para IA no futuro.
+       *
+       * Uma falha aqui NUNCA deve derrubar o fluxo de resposta
+       * já existente — só a memória fica indisponível.
+       */
+      let contact: Awaited<
+        ReturnType<typeof getOrCreateContact>
+      > | null = null;
+
+      let conversation: Awaited<
+        ReturnType<typeof getOrCreateConversation>
+      > | null = null;
+
+      if (comment.userId) {
+        try {
+          contact = await getOrCreateContact({
+            instagramUserId: comment.userId,
+            username: comment.username,
+          });
+
+          conversation = await getOrCreateConversation({
+            contactId: contact.id,
+            instagramAccountId: comment.instagramUserId,
+            sourceContentId: comment.mediaId,
+          });
+
+          await recordMessage({
+            conversationId: conversation.id,
+            contactId: contact.id,
+            direction: "inbound",
+            messageId: comment.commentId,
+            text: comment.text,
+            source: "comment",
+          });
+        } catch (memoryError) {
+          console.error(
+            "Falha ao registrar memória do contato:",
+            memoryError
+          );
+
+          contact = null;
+          conversation = null;
+        }
+      }
+
+      /**
        * ======================================================
        * 5. RESPOSTA PÚBLICA
        * ======================================================
@@ -557,8 +624,111 @@ export async function processPendingEvents(limit = 10) {
             "Resposta pública já enviada anteriormente.",
         };
       } else {
-        const publicMessage =
-          automation.static_reply?.trim();
+        /**
+         * ----------------------------------------------------
+         * DETERMINA A MENSAGEM: IA (quando ai_mode) ou
+         * static_reply (fallback / automações sem IA).
+         * ----------------------------------------------------
+         */
+        let publicMessage = automation.static_reply?.trim();
+        let aiFailureReason: string | null = null;
+
+        if (automation.ai_mode === true) {
+          if (!contact || !conversation) {
+            aiFailureReason =
+              "Memória indisponível para gerar contexto da IA.";
+          } else {
+            try {
+              const [history, aiConfig] = await Promise.all([
+                getConversationHistory(conversation.id),
+                getAIConfig(),
+              ]);
+
+              const context: AIContext = {
+                currentMessage: comment.text,
+                originalComment: comment.text,
+                contentTitle: null,
+                contentTheme: null,
+                username: comment.username ?? null,
+                history,
+                contact: {
+                  classification: contact.classification,
+                  interactionCount: contact.interaction_count,
+                  recurring: contact.recurring,
+                  interests: contact.interests,
+                  topics: contact.topics,
+                },
+                aiConfig,
+                automationSystemPrompt:
+                  automation.ai_system_prompt,
+              };
+
+              const aiResult = await generateAIReply(context);
+
+              if (!aiResult.ok) {
+                aiFailureReason = aiResult.reason;
+              } else {
+                // Registra o que a IA observou (classificação/assunto),
+                // mesmo quando ela decide não responder.
+                await applyAIObservations(contact.id, {
+                  classification: aiResult.decision.classification,
+                  topic: aiResult.decision.topic,
+                });
+
+                if (aiResult.decision.should_reply === false) {
+                  /**
+                   * A conversa terminou naturalmente ou não há
+                   * motivo para responder. Isso é uma conclusão
+                   * válida, não um erro — não cai no fallback
+                   * static_reply e não tenta a DM.
+                   */
+                  commentResults.push({
+                    status: "ai_skipped",
+                    automationId: automation.id,
+                    automationName: automation.name,
+                    comment: comment.text,
+                    username: comment.username,
+                    userId: comment.userId,
+                    commentId: comment.commentId,
+                    ai: {
+                      should_reply: false,
+                      reason: aiResult.decision.reason ?? null,
+                    },
+                  });
+
+                  continue;
+                }
+
+                publicMessage = aiResult.decision.response.trim();
+              }
+            } catch (aiError) {
+              aiFailureReason =
+                aiError instanceof Error
+                  ? aiError.message
+                  : "Erro inesperado ao gerar resposta com IA";
+            }
+          }
+
+          // Falha técnica da IA -> cai no static_reply como fallback
+          // (seção 7 da especificação). Se também não houver
+          // static_reply, fica pendente para nova tentativa.
+          if (aiFailureReason && !publicMessage) {
+            eventProcessed = false;
+
+            commentResults.push({
+              status: "matched_pending",
+              reason: `IA indisponível (${aiFailureReason}) e static_reply não configurado`,
+              automationId: automation.id,
+              automationName: automation.name,
+              comment: comment.text,
+              username: comment.username,
+              userId: comment.userId,
+              commentId: comment.commentId,
+            });
+
+            continue;
+          }
+        }
 
         if (!publicMessage) {
           eventProcessed = false;
@@ -617,6 +787,23 @@ export async function processPendingEvents(limit = 10) {
           });
 
           continue;
+        }
+
+        if (contact && conversation) {
+          try {
+            await recordMessage({
+              conversationId: conversation.id,
+              contactId: contact.id,
+              direction: "outbound",
+              text: publicMessage,
+              source: "comment_reply",
+            });
+          } catch (memoryError) {
+            console.error(
+              "Falha ao registrar resposta pública na memória:",
+              memoryError
+            );
+          }
         }
       }
 
@@ -691,6 +878,21 @@ export async function processPendingEvents(limit = 10) {
 
             if (!privateReply.sent) {
               eventProcessed = false;
+            } else if (contact && conversation) {
+              try {
+                await recordMessage({
+                  conversationId: conversation.id,
+                  contactId: contact.id,
+                  direction: "outbound",
+                  text: dmMessage,
+                  source: "dm",
+                });
+              } catch (memoryError) {
+                console.error(
+                  "Falha ao registrar DM na memória:",
+                  memoryError
+                );
+              }
             }
           }
         }
