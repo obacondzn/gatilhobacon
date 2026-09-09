@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 
 type Automation = {
   id: string;
@@ -307,157 +307,123 @@ export default function Home() {
     ) || automations[0];
 
   return (
-    <div className="min-h-screen bg-[#f7f7fb] text-[#17151d]">
-      <header className="border-b bg-white">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-8 py-5">
+    <div className="min-h-screen bg-paper text-ink">
+      <header className="border-b border-line">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-6 md:px-10">
           <div>
-            <div className="text-2xl font-bold tracking-tight">
-              gatilho
-              <span className="text-violet-600">
-                .
-              </span>
+            <div className="text-xl font-extrabold tracking-tight">
+              Gatilho
             </div>
-
-            <div className="text-xs text-gray-500">
-              Instagram automation
+            <div className="mt-0.5 text-[13px] text-muted">
+              Automação para Instagram
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
-              Instagram conectado
-            </span>
-
-            <div className="h-9 w-9 rounded-full bg-gradient-to-br from-violet-500 to-pink-500" />
+          <div className="flex items-center gap-2 text-[13px] text-muted">
+            <span className="h-1.5 w-1.5 rounded-full bg-ok" />
+            Instagram conectado
           </div>
         </div>
       </header>
 
-      <main className="mx-auto max-w-7xl space-y-6 px-8 py-8">
-        <div>
-          <h1 className="text-3xl font-bold">
-            Dashboard
+      <main className="mx-auto max-w-6xl px-6 py-10 md:px-10 md:py-14">
+        {/* HERO / OVERVIEW */}
+        <section className="border-b border-line pb-10 md:pb-14">
+          <h1 className="max-w-2xl text-[2.5rem] font-extrabold leading-[1.05] tracking-tight md:text-6xl">
+            Suas automações,
+            <br />
+            em um só lugar.
           </h1>
 
-          <p className="mt-1 text-gray-500">
-            Configure automações e acompanhe as
-            interações recebidas.
+          <p className="mt-4 max-w-md text-[15px] leading-relaxed text-muted">
+            Configure o que acontece quando alguém comenta ou envia
+            mensagem para o seu perfil.
           </p>
-        </div>
 
-        <section className="grid gap-4 md:grid-cols-3">
-          <Stat
-            title="Eventos recebidos"
-            value={events.length}
-          />
-
-          <Stat
-            title="Pendentes"
-            value={pending}
-          />
-
-          <Stat
-            title="Processados"
-            value={processed}
-          />
+          <div className="mt-10 grid grid-cols-3 divide-x divide-line border-y border-line">
+            <StatBlock title="Eventos recebidos" value={events.length} />
+            <StatBlock title="Pendentes" value={pending} />
+            <StatBlock title="Processados" value={processed} />
+          </div>
         </section>
 
-        <section className="grid gap-6 lg:grid-cols-[1fr_1.3fr]">
-          <div className="rounded-2xl border bg-white p-6 shadow-sm">
+        {/* FORM + FLOW */}
+        <section className="grid gap-x-16 gap-y-10 border-b border-line py-10 md:py-14 lg:grid-cols-[1fr_1.2fr]">
+          <div>
             <div className="flex items-start justify-between gap-4">
-              <div>
-                <h2 className="text-lg font-bold">
-                  {editingId
-                    ? "Editar automação"
-                    : "Nova automação"}
-                </h2>
-
-                <p className="mt-1 text-sm text-gray-500">
-                  Configure o comportamento quando
-                  alguém comentar.
-                </p>
-              </div>
+              <h2 className="text-xl font-bold tracking-tight">
+                {editingId ? "Editar automação" : "Nova automação"}
+              </h2>
 
               {editingId && (
                 <button
                   type="button"
                   onClick={resetForm}
-                  className="rounded-lg border px-3 py-2 text-xs font-semibold hover:bg-gray-50"
+                  className="text-[13px] font-semibold text-muted underline decoration-line underline-offset-4 hover:text-ink"
                 >
                   Cancelar
                 </button>
               )}
             </div>
 
-            <form
-              onSubmit={saveAutomation}
-              className="mt-6 space-y-5"
-            >
-              <label className="block text-sm font-medium">
-                Palavra-chave
+            <p className="mt-1 text-[13px] text-muted">
+              Defina o comportamento quando alguém comentar.
+            </p>
+
+            <form onSubmit={saveAutomation} className="mt-8 space-y-6">
+              <label className="block">
+                <span className="text-[13px] font-medium text-ink-soft">
+                  Palavra-chave
+                </span>
 
                 <input
                   value={keyword}
-                  onChange={(e) =>
-                    setKeyword(
-                      e.target.value
-                    )
-                  }
+                  onChange={(e) => setKeyword(e.target.value)}
                   placeholder="Ex: Efeito"
-                  className="mt-2 w-full rounded-xl border px-4 py-3 outline-none focus:border-violet-500"
+                  className="mt-2 w-full border border-line bg-surface px-3.5 py-3 text-[15px] outline-none transition-colors focus:border-ink"
                 />
               </label>
 
-              <label className="block text-sm font-medium">
-                Resposta no comentário
+              <label className="block">
+                <span className="text-[13px] font-medium text-ink-soft">
+                  Resposta no comentário
+                </span>
 
                 <textarea
                   value={response}
-                  onChange={(e) =>
-                    setResponse(
-                      e.target.value
-                    )
-                  }
+                  onChange={(e) => setResponse(e.target.value)}
                   rows={3}
                   placeholder="Digite a resposta pública..."
-                  className="mt-2 w-full resize-none rounded-xl border px-4 py-3 outline-none focus:border-violet-500"
+                  className="mt-2 w-full resize-none border border-line bg-surface px-3.5 py-3 text-[15px] outline-none transition-colors focus:border-ink"
                 />
               </label>
 
-              <div className="border-t" />
-
-              <div className="rounded-xl border bg-gray-50 p-4">
+              <div className="border border-line p-4">
                 <div className="flex items-center justify-between gap-4">
                   <div>
-                    <div className="font-semibold">
+                    <div className="text-[14px] font-semibold">
                       Mensagem direta
                     </div>
-
-                    <div className="mt-1 text-sm text-gray-500">
-                      Envie uma DM automaticamente
-                      para quem comentar.
+                    <div className="mt-1 text-[13px] text-muted">
+                      Envie uma DM automaticamente para quem comentar.
                     </div>
                   </div>
 
                   <button
                     type="button"
-                    onClick={() =>
-                      setDmEnabled(
-                        !dmEnabled
-                      )
-                    }
+                    onClick={() => setDmEnabled(!dmEnabled)}
                     aria-pressed={dmEnabled}
-                    className={`relative h-6 w-11 shrink-0 rounded-full transition ${
+                    className={`relative h-5 w-9 shrink-0 border transition-colors ${
                       dmEnabled
-                        ? "bg-violet-600"
-                        : "bg-gray-300"
+                        ? "border-ink bg-ink"
+                        : "border-line-strong bg-transparent"
                     }`}
                   >
                     <span
-                      className={`absolute top-1 h-4 w-4 rounded-full bg-white shadow transition ${
+                      className={`absolute top-0.5 h-3.5 w-3.5 transition-transform ${
                         dmEnabled
-                          ? "left-6"
-                          : "left-1"
+                          ? "translate-x-4 bg-paper"
+                          : "translate-x-0.5 bg-ink-soft"
                       }`}
                     />
                   </button>
@@ -465,23 +431,21 @@ export default function Home() {
 
                 {dmEnabled && (
                   <div className="mt-4">
-                    <label className="block text-sm font-medium">
-                      Mensagem da DM
+                    <label className="block">
+                      <span className="text-[13px] font-medium text-ink-soft">
+                        Mensagem da DM
+                      </span>
 
                       <textarea
                         value={dmReply}
-                        onChange={(e) =>
-                          setDmReply(
-                            e.target.value
-                          )
-                        }
+                        onChange={(e) => setDmReply(e.target.value)}
                         rows={4}
                         placeholder="Digite a mensagem que será enviada..."
-                        className="mt-2 w-full resize-none rounded-xl border bg-white px-4 py-3 outline-none focus:border-violet-500"
+                        className="mt-2 w-full resize-none border border-line bg-paper px-3.5 py-3 text-[15px] outline-none transition-colors focus:border-ink"
                       />
                     </label>
 
-                    <p className="mt-2 text-xs text-gray-400">
+                    <p className="mt-2 text-[12px] text-faint">
                       Teste sem link por enquanto.
                     </p>
                   </div>
@@ -491,7 +455,7 @@ export default function Home() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full rounded-xl bg-[#17151d] px-4 py-3 font-semibold text-white hover:opacity-90 disabled:opacity-50"
+                className="w-full bg-ink px-4 py-3.5 text-[14px] font-bold uppercase tracking-wide text-paper transition-opacity hover:opacity-85 disabled:opacity-50"
               >
                 {loading
                   ? "Salvando..."
@@ -502,236 +466,172 @@ export default function Home() {
             </form>
 
             {message && (
-              <p className="mt-4 rounded-xl bg-violet-50 p-3 text-sm text-violet-800">
+              <p className="mt-4 border border-line-strong px-4 py-3 text-[13px]">
                 {message}
               </p>
             )}
           </div>
 
-          <div className="rounded-2xl border bg-white p-6 shadow-sm">
-            <div className="flex items-center justify-between">
+          <div>
+            <div className="flex flex-wrap items-center justify-between gap-4">
               <div>
-                <h2 className="text-lg font-bold">
+                <h2 className="text-xl font-bold tracking-tight">
                   Fluxo ativo
                 </h2>
-
-                <p className="text-sm text-gray-500">
-                  Comentário → palavra-chave →
-                  resposta
-                  {activeAutomation?.dm_enabled &&
-                    " → DM"}
+                <p className="mt-1 text-[13px] text-muted">
+                  Comentário → palavra-chave → resposta
+                  {activeAutomation?.dm_enabled && " → DM"}
                 </p>
               </div>
 
               <button
                 onClick={processNow}
                 disabled={loading}
-                className="rounded-xl border px-4 py-2 text-sm font-semibold hover:bg-gray-50 disabled:opacity-50"
+                className="border border-line px-4 py-2 text-[13px] font-bold uppercase tracking-wide transition-colors hover:border-ink disabled:opacity-50"
               >
                 Processar agora
               </button>
             </div>
 
-            <div className="mt-6 flex flex-wrap items-center gap-3">
-              <Flow
+            <div className="mt-8 flex flex-wrap items-stretch gap-3">
+              <FlowStep
                 title="Comentário"
-                text={
-                  latestComment?.text ||
-                  "Efeito"
-                }
+                text={latestComment?.text || "Efeito"}
               />
-
-              <span className="text-gray-300">
-                →
-              </span>
-
-              <Flow
+              <FlowArrow />
+              <FlowStep
                 title="Palavra-chave"
-                text={
-                  activeAutomation
-                    ?.keywords?.[0] ||
-                  "Efeito"
-                }
+                text={activeAutomation?.keywords?.[0] || "Efeito"}
               />
-
-              <span className="text-gray-300">
-                →
-              </span>
-
-              <Flow
+              <FlowArrow />
+              <FlowStep
                 title="Resposta"
                 text={
-                  activeAutomation
-                    ?.static_reply ||
+                  activeAutomation?.static_reply ||
                   "Oi! Vi seu comentário 👋"
                 }
               />
             </div>
 
             {activeAutomation?.dm_enabled && (
-              <div className="mt-4 flex items-center gap-3">
-                <span className="text-gray-300">
-                  ↓
-                </span>
-
-                <Flow
+              <div className="mt-3 flex items-center gap-3">
+                <span className="pl-1 text-faint">↓</span>
+                <FlowStep
                   title="Mensagem direta"
-                  text={
-                    activeAutomation
-                      .dm_reply ||
-                    "Mensagem direta"
-                  }
+                  text={activeAutomation.dm_reply || "Mensagem direta"}
                 />
               </div>
             )}
 
-            <div className="mt-6 rounded-xl bg-gray-50 p-4 text-sm">
-              <b>Conta profissional</b>
-
-              <div className="mt-1 text-gray-500">
-                Instagram conectado • pronto para
-                receber eventos
-              </div>
+            <div className="mt-8 border-t border-line pt-6 text-[13px]">
+              <span className="font-semibold">Conta profissional</span>
+              <span className="text-muted">
+                {" "}
+                — Instagram conectado, pronta para receber eventos.
+              </span>
             </div>
           </div>
         </section>
 
         {/* AUTOMAÇÕES */}
-        <section className="rounded-2xl border bg-white shadow-sm">
-          <div className="border-b px-6 py-5">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="font-bold">
-                  Minhas automações
-                </h2>
-
-                <p className="mt-1 text-sm text-gray-500">
-                  Edite ou exclua suas regras.
-                </p>
-              </div>
-
-              <span className="text-sm text-gray-400">
-                {automations.length}{" "}
-                {automations.length === 1
-                  ? "automação"
-                  : "automações"}
-              </span>
-            </div>
+        <section className="border-b border-line py-10 md:py-14">
+          <div className="flex items-end justify-between gap-4">
+            <h2 className="text-xl font-bold tracking-tight">
+              Minhas automações
+            </h2>
+            <span className="text-[13px] text-muted">
+              {automations.length}{" "}
+              {automations.length === 1 ? "automação" : "automações"}
+            </span>
           </div>
 
-          <div className="divide-y">
+          <div className="mt-6 divide-y divide-line border-t border-line">
             {automations.length === 0 ? (
-              <div className="p-8 text-center text-sm text-gray-500">
+              <div className="py-10 text-center text-[14px] text-muted">
                 Nenhuma automação criada.
               </div>
             ) : (
-              automations.map(
-                (automation) => (
-                  <div
-                    key={automation.id}
-                    className="flex flex-col gap-4 px-6 py-5 md:flex-row md:items-center md:justify-between"
-                  >
-                    <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-semibold">
-                          {automation.name}
-                        </span>
+              automations.map((automation) => (
+                <div
+                  key={automation.id}
+                  className="flex flex-col gap-4 py-5 md:flex-row md:items-center md:justify-between"
+                >
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-3">
+                      <span className="font-semibold">
+                        {automation.name}
+                      </span>
 
-                        <span className="rounded-full bg-violet-50 px-2 py-1 text-xs font-semibold text-violet-700">
-                          {automation.keywords?.[0] ||
-                            "sem palavra-chave"}
-                        </span>
+                      <Tag>
+                        {automation.keywords?.[0] || "sem palavra-chave"}
+                      </Tag>
 
-                        {automation.dm_enabled && (
-                          <span className="rounded-full bg-blue-50 px-2 py-1 text-xs font-semibold text-blue-700">
-                            DM ativada
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="mt-2 text-sm text-gray-500">
-                        {automation.static_reply ||
-                          "Sem resposta configurada"}
-                      </div>
-
-                      {automation.dm_enabled &&
-                        automation.dm_reply && (
-                          <div className="mt-1 text-xs text-gray-400">
-                            DM:{" "}
-                            {
-                              automation.dm_reply
-                            }
-                          </div>
-                        )}
+                      {automation.dm_enabled && <Tag>DM ativada</Tag>}
                     </div>
 
-                    <div className="flex shrink-0 gap-2">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          editAutomation(
-                            automation
-                          )
-                        }
-                        disabled={loading}
-                        className="rounded-xl border px-4 py-2 text-sm font-semibold hover:bg-gray-50 disabled:opacity-50"
-                      >
-                        Editar
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() =>
-                          deleteAutomation(
-                            automation
-                          )
-                        }
-                        disabled={loading}
-                        className="rounded-xl border border-red-200 px-4 py-2 text-sm font-semibold text-red-600 hover:bg-red-50 disabled:opacity-50"
-                      >
-                        Excluir
-                      </button>
+                    <div className="mt-2 text-[14px] text-muted">
+                      {automation.static_reply || "Sem resposta configurada"}
                     </div>
+
+                    {automation.dm_enabled && automation.dm_reply && (
+                      <div className="mt-1 text-[12px] text-faint">
+                        DM: {automation.dm_reply}
+                      </div>
+                    )}
                   </div>
-                )
-              )
+
+                  <div className="flex shrink-0 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => editAutomation(automation)}
+                      disabled={loading}
+                      className="border border-line px-4 py-2 text-[13px] font-bold uppercase tracking-wide transition-colors hover:border-ink disabled:opacity-50"
+                    >
+                      Editar
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => deleteAutomation(automation)}
+                      disabled={loading}
+                      className="border border-line px-4 py-2 text-[13px] font-bold uppercase tracking-wide text-bad transition-colors hover:border-bad disabled:opacity-50"
+                    >
+                      Excluir
+                    </button>
+                  </div>
+                </div>
+              ))
             )}
           </div>
         </section>
 
         {/* ACTIVITY */}
-        <section className="rounded-2xl border bg-white shadow-sm">
-          <div className="border-b px-6 py-5">
-            <h2 className="font-bold">
-              Atividade recente
-            </h2>
-          </div>
+        <section className="py-10 md:py-14">
+          <h2 className="text-xl font-bold tracking-tight">
+            Atividade recente
+          </h2>
 
-          <div className="divide-y">
+          <div className="mt-6 divide-y divide-line border-t border-line">
             {events.length === 0 ? (
-              <div className="p-8 text-center text-sm text-gray-500">
+              <div className="py-10 text-center text-[14px] text-muted">
                 Nenhum evento recebido ainda.
               </div>
             ) : (
               events.map((event) => {
                 const value =
-                  event.payload?.entry?.[0]
-                    ?.changes?.[0]?.value;
+                  event.payload?.entry?.[0]?.changes?.[0]?.value;
 
-                const result =
-                  event.processing_result;
+                const result = event.processing_result;
 
-                const dmSent =
-                  result?.dm?.sent === true;
+                const dmSent = result?.dm?.sent === true;
 
                 const commentSent =
-                  result?.comment_reply?.sent ===
-                  true;
+                  result?.comment_reply?.sent === true;
 
                 return (
                   <div
                     key={event.id}
-                    className="flex items-center justify-between gap-4 px-6 py-4"
+                    className="flex flex-col gap-3 py-4 md:flex-row md:items-center md:justify-between"
                   >
                     <div className="min-w-0">
                       <div className="font-medium">
@@ -740,48 +640,23 @@ export default function Home() {
                           : "Usuário do Instagram"}
                       </div>
 
-                      <div className="truncate text-sm text-gray-500">
-                        {value?.text ||
-                          "Evento recebido"}
+                      <div className="truncate text-[14px] text-muted">
+                        {value?.text || "Evento recebido"}
                       </div>
 
-                      {event.processed &&
-                        result && (
-                          <div className="mt-2 flex flex-wrap gap-2">
-                            {commentSent && (
-                              <span className="rounded-full bg-emerald-50 px-2 py-1 text-[11px] font-semibold text-emerald-700">
-                                Comentário respondido
-                              </span>
-                            )}
-
-                            {dmSent && (
-                              <span className="rounded-full bg-violet-50 px-2 py-1 text-[11px] font-semibold text-violet-700">
-                                DM enviada
-                              </span>
-                            )}
-                          </div>
-                        )}
+                      {event.processed && result && (
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {commentSent && <Tag tone="ok">Comentário respondido</Tag>}
+                          {dmSent && <Tag tone="ok">DM enviada</Tag>}
+                        </div>
+                      )}
                     </div>
 
-                    <div className="shrink-0 text-right">
-                      <span
-                        className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                          event.processed
-                            ? "bg-emerald-50 text-emerald-700"
-                            : "bg-amber-50 text-amber-700"
-                        }`}
-                      >
-                        {event.processed
-                          ? "Processado"
-                          : "Pendente"}
-                      </span>
+                    <div className="shrink-0 text-left md:text-right">
+                      <StatusLabel processed={event.processed} />
 
-                      <div className="mt-1 text-xs text-gray-400">
-                        {new Date(
-                          event.created_at
-                        ).toLocaleString(
-                          "pt-BR"
-                        )}
+                      <div className="mt-1 text-[12px] text-faint">
+                        {new Date(event.created_at).toLocaleString("pt-BR")}
                       </div>
                     </div>
                   </div>
@@ -795,42 +670,69 @@ export default function Home() {
   );
 }
 
-function Stat({
-  title,
-  value,
-}: {
-  title: string;
-  value: number;
-}) {
+function StatBlock({ title, value }: { title: string; value: number }) {
   return (
-    <div className="rounded-2xl border bg-white p-5 shadow-sm">
-      <div className="text-sm text-gray-500">
-        {title}
-      </div>
-
-      <div className="mt-2 text-3xl font-bold">
+    <div className="px-0 py-6 first:pl-0 md:px-6">
+      <div className="text-[13px] text-muted">{title}</div>
+      <div className="mt-2 text-4xl font-extrabold tracking-tight md:text-5xl">
         {value}
       </div>
     </div>
   );
 }
 
-function Flow({
-  title,
-  text,
-}: {
-  title: string;
-  text: string;
-}) {
+function FlowStep({ title, text }: { title: string; text: string }) {
   return (
-    <div className="min-w-0 flex-1 rounded-xl border p-4">
-      <div className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+    <div className="min-w-[9rem] flex-1 border border-line p-4">
+      <div className="text-[11px] font-semibold uppercase tracking-wide text-faint">
         {title}
       </div>
-
-      <div className="mt-2 truncate text-sm font-medium">
-        {text}
-      </div>
+      <div className="mt-2 truncate text-[14px] font-medium">{text}</div>
     </div>
+  );
+}
+
+function FlowArrow() {
+  return (
+    <span className="flex items-center text-faint" aria-hidden>
+      →
+    </span>
+  );
+}
+
+function Tag({
+  children,
+  tone = "neutral",
+}: {
+  children: ReactNode;
+  tone?: "neutral" | "ok";
+}) {
+  return (
+    <span
+      className={`border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${
+        tone === "ok"
+          ? "border-ok bg-ok-bg text-ok"
+          : "border-line-strong text-ink-soft"
+      }`}
+    >
+      {children}
+    </span>
+  );
+}
+
+function StatusLabel({ processed }: { processed: boolean }) {
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 text-[12px] font-semibold uppercase tracking-wide ${
+        processed ? "text-ok" : "text-warn"
+      }`}
+    >
+      <span
+        className={`h-1.5 w-1.5 rounded-full ${
+          processed ? "bg-ok" : "bg-warn"
+        }`}
+      />
+      {processed ? "Processado" : "Pendente"}
+    </span>
   );
 }
