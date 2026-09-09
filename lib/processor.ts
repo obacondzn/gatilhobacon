@@ -7,6 +7,7 @@ import {
 type InstagramCommentEvent = {
   entry?: Array<{
     id?: string;
+    time?: number;
     changes?: Array<{
       field?: string;
       value?: {
@@ -33,49 +34,17 @@ type Automation = {
   static_reply: string | null;
   is_active: boolean;
   active: boolean;
+  dm_enabled: boolean;
+  dm_reply: string | null;
 };
 
-async function replyToComment(commentId: string, message: string) {
-  const token = process.env.INSTAGRAM_ACCESS_TOKEN;
-
-  if (!token) {
-    return {
-      sent: false,
-      reason: "INSTAGRAM_ACCESS_TOKEN não configurado",
-    };
-  }
-
-  const url = `${INSTAGRAM_GRAPH_URL}/${INSTAGRAM_GRAPH_VERSION}/${commentId}/replies`;
-
-  const response = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      message,
-      access_token: token,
-    }),
-    cache: "no-store",
-  });
-
-  const data = await response.json().catch(() => ({}));
-
-  if (!response.ok) {
-    return {
-      sent: false,
-      reason:
-        data?.error?.message ||
-        "Erro ao responder no Instagram",
-      data,
-    };
-  }
-
-  return {
-    sent: true,
-    data,
-  };
-}
+type CommentData = {
+  commentId?: string;
+  username?: string;
+  userId?: string;
+  instagramUserId?: string;
+  text: string;
+};
 
 function normalize(value: string) {
   return value
@@ -95,7 +64,9 @@ function matchesKeyword(
   return keywords.some((keyword) => {
     const normalizedKeyword = normalize(keyword);
 
-    if (!normalizedKeyword) return false;
+    if (!normalizedKeyword) {
+      return false;
+    }
 
     switch (matchMode) {
       case "exact":
@@ -114,37 +85,273 @@ function matchesKeyword(
   });
 }
 
+/**
+ * ============================================================
+ * RESPOSTA PÚBLICA AO COMENTÁRIO
+ * ============================================================
+ *
+ * POST /{comment-id}/replies
+ */
+async function replyToComment(
+  commentId: string,
+  message: string
+) {
+  const token = process.env.INSTAGRAM_ACCESS_TOKEN;
+
+  if (!token) {
+    return {
+      sent: false,
+      reason: "INSTAGRAM_ACCESS_TOKEN não configurado",
+    };
+  }
+
+  const url =
+    `${INSTAGRAM_GRAPH_URL}/` +
+    `${INSTAGRAM_GRAPH_VERSION}/` +
+    `${commentId}/replies`;
+
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        message,
+        access_token: token,
+      }),
+      cache: "no-store",
+    });
+
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      return {
+        sent: false,
+        reason:
+          data?.error?.message ||
+          "Erro ao responder publicamente ao comentário",
+        data,
+      };
+    }
+
+    return {
+      sent: true,
+      data,
+    };
+  } catch (error) {
+    return {
+      sent: false,
+      reason:
+        error instanceof Error
+          ? error.message
+          : "Erro de conexão ao responder comentário",
+    };
+  }
+}
+
+/**
+ * ============================================================
+ * PRIVATE REPLY / DM
+ * ============================================================
+ *
+ * IMPORTANTE:
+ *
+ * Para Instagram Login, a Private Reply NÃO usa:
+ *
+ *   /{comment-id}/private_replies
+ *
+ * Ela usa:
+ *
+ *   POST /{IG_USER_ID}/messages
+ *
+ * com:
+ *
+ * {
+ *   recipient: {
+ *     comment_id: "ID_DO_COMENTARIO"
+ *   },
+ *   message: {
+ *     text: "..."
+ *   }
+ * }
+ *
+ * O ID do comentário continua sendo o destinatário lógico.
+ * O IG_USER_ID é o ID da conta profissional que recebeu
+ * o comentário.
+ */
+async function sendPrivateReply(
+  instagramUserId: string,
+  commentId: string,
+  message: string
+) {
+  const token = process.env.INSTAGRAM_ACCESS_TOKEN;
+
+  if (!token) {
+    return {
+      sent: false,
+      reason: "INSTAGRAM_ACCESS_TOKEN não configurado",
+    };
+  }
+
+  if (!instagramUserId) {
+    return {
+      sent: false,
+      reason:
+        "Instagram User ID não encontrado no webhook.",
+    };
+  }
+
+  if (!commentId) {
+    return {
+      sent: false,
+      reason: "ID do comentário não encontrado.",
+    };
+  }
+
+  const url =
+    `${INSTAGRAM_GRAPH_URL}/` +
+    `${INSTAGRAM_GRAPH_VERSION}/` +
+    `${instagramUserId}/messages`;
+
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        recipient: {
+          comment_id: commentId,
+        },
+        message: {
+          text: message,
+        },
+      }),
+      cache: "no-store",
+    });
+
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      return {
+        sent: false,
+        reason:
+          data?.error?.message ||
+          "Erro ao enviar Private Reply",
+        data,
+      };
+    }
+
+    return {
+      sent: true,
+      data,
+    };
+  } catch (error) {
+    return {
+      sent: false,
+      reason:
+        error instanceof Error
+          ? error.message
+          : "Erro de conexão ao enviar Private Reply",
+    };
+  }
+}
+
+/**
+ * ============================================================
+ * EXTRAI TODOS OS COMENTÁRIOS DO WEBHOOK
+ * ============================================================
+ */
+function extractComments(
+  payload: InstagramCommentEvent
+): CommentData[] {
+  const comments: CommentData[] = [];
+
+  for (const entry of payload.entry ?? []) {
+    const instagramUserId = entry.id;
+
+    for (const change of entry.changes ?? []) {
+      if (change.field !== "comments") {
+        continue;
+      }
+
+      const value = change.value;
+
+      if (!value?.text) {
+        continue;
+      }
+
+      comments.push({
+        commentId: value.id,
+        username: value.from?.username,
+        userId: value.from?.id,
+        instagramUserId,
+        text: value.text,
+      });
+    }
+  }
+
+  return comments;
+}
+
+/**
+ * ============================================================
+ * PROCESSAMENTO PRINCIPAL
+ * ============================================================
+ */
 export async function processPendingEvents(limit = 10) {
-  const { data: automations, error: automationError } =
-    await supabaseAdmin
-      .from("automations")
-      .select(
-        `
-        id,
-        name,
-        keywords,
-        match_mode,
-        static_reply,
-        is_active,
-        active
-      `
-      )
-      .eq("active", true);
+  /**
+   * ----------------------------------------------------------
+   * 1. BUSCA AUTOMAÇÕES ATIVAS
+   * ----------------------------------------------------------
+   */
+  const {
+    data: automations,
+    error: automationError,
+  } = await supabaseAdmin
+    .from("automations")
+    .select(`
+      id,
+      name,
+      keywords,
+      match_mode,
+      static_reply,
+      is_active,
+      active,
+      dm_enabled,
+      dm_reply
+    `)
+    .eq("active", true);
 
   if (automationError) {
     throw automationError;
   }
 
-  const { data: events, error: eventError } =
-    await supabaseAdmin
-      .from("events")
-      .select(
-        "id, payload, processed, created_at"
-      )
-      .eq("source", "instagram")
-      .eq("processed", false)
-      .order("created_at", { ascending: true })
-      .limit(limit);
+  /**
+   * ----------------------------------------------------------
+   * 2. BUSCA EVENTOS PENDENTES
+   * ----------------------------------------------------------
+   */
+  const {
+    data: events,
+    error: eventError,
+  } = await supabaseAdmin
+    .from("events")
+    .select(`
+      id,
+      payload,
+      processed,
+      processing_result,
+      created_at
+    `)
+    .eq("source", "instagram")
+    .eq("processed", false)
+    .order("created_at", {
+      ascending: true,
+    })
+    .limit(limit);
 
   if (eventError) {
     throw eventError;
@@ -152,31 +359,99 @@ export async function processPendingEvents(limit = 10) {
 
   const results: Record<string, unknown>[] = [];
 
+  /**
+   * ----------------------------------------------------------
+   * 3. PROCESSA CADA EVENTO
+   * ----------------------------------------------------------
+   */
   for (const event of events ?? []) {
-    const payload = event.payload as InstagramCommentEvent;
+    const payload =
+      event.payload as InstagramCommentEvent;
 
-    const comments = (payload.entry ?? []).flatMap(
-      (entry) =>
-        (entry.changes ?? [])
-          .filter(
-            (change) =>
-              change.field === "comments" &&
-              !!change.value?.text
-          )
-          .map((change) => ({
-            commentId: change.value?.id,
-            username: change.value?.from?.username,
-            text: change.value?.text || "",
-          }))
-    );
+    const comments = extractComments(payload);
 
-    let processed = true;
+    /**
+     * Se não existem comentários nesse evento,
+     * marcamos como processado.
+     */
+    if (comments.length === 0) {
+      const result = {
+        status: "ignored",
+      };
 
-    let result: Record<string, unknown> = {
-      status: "ignored",
-    };
+      const { error: updateError } =
+        await supabaseAdmin
+          .from("events")
+          .update({
+            processed: true,
+            processing_result: result,
+            processed_at: new Date().toISOString(),
+          })
+          .eq("id", event.id);
 
+      if (updateError) {
+        throw updateError;
+      }
+
+      results.push({
+        id: event.id,
+        ...result,
+        processed: true,
+      });
+
+      continue;
+    }
+
+    /**
+     * --------------------------------------------------------
+     * RECUPERA RESULTADO ANTERIOR
+     * --------------------------------------------------------
+     *
+     * Isso permite:
+     *
+     * comentário público = enviado
+     * DM = falhou
+     *
+     * Na próxima tentativa:
+     *
+     * NÃO responde o comentário novamente
+     * TENTA somente a DM
+     */
+    const previousResult =
+      event.processing_result as
+        | {
+            comments?: Array<{
+              commentId?: string;
+
+              comment_reply?: {
+                sent?: boolean;
+              };
+
+              dm?: {
+                sent?: boolean;
+              };
+            }>;
+          }
+        | null;
+
+    const previousComments =
+      previousResult?.comments ?? [];
+
+    const commentResults: Record<string, unknown>[] = [];
+
+    let eventProcessed = true;
+
+    /**
+     * --------------------------------------------------------
+     * 4. PROCESSA TODOS OS COMENTÁRIOS
+     * --------------------------------------------------------
+     */
     for (const comment of comments) {
+      /**
+       * ------------------------------------------------------
+       * ENCONTRA AUTOMAÇÃO
+       * ------------------------------------------------------
+       */
       const automation = (
         (automations ?? []) as Automation[]
       ).find((automation) => {
@@ -191,54 +466,259 @@ export async function processPendingEvents(limit = 10) {
         );
       });
 
+      /**
+       * Nenhuma automação encontrada.
+       */
       if (!automation) {
-        result = {
+        commentResults.push({
           status: "no_match",
           comment: comment.text,
-        };
+          username: comment.username,
+          userId: comment.userId,
+          commentId: comment.commentId,
+        });
 
         continue;
       }
 
+      /**
+       * ------------------------------------------------------
+       * PRECISA DO ID DO COMENTÁRIO
+       * ------------------------------------------------------
+       */
       if (!comment.commentId) {
-        processed = false;
+        eventProcessed = false;
 
-        result = {
+        commentResults.push({
           status: "matched_pending",
           reason: "comment_id ausente",
           comment: comment.text,
           username: comment.username,
+          userId: comment.userId,
           automationId: automation.id,
-        };
+        });
 
         continue;
       }
 
-      const message = automation.static_reply?.trim();
+      /**
+       * ------------------------------------------------------
+       * PRECISA DO ID DA CONTA PROFISSIONAL
+       * ------------------------------------------------------
+       */
+      if (!comment.instagramUserId) {
+        eventProcessed = false;
 
-      if (!message) {
-        processed = false;
-
-        result = {
+        commentResults.push({
           status: "matched_pending",
-          reason: "static_reply não configurado",
+          reason:
+            "Instagram User ID ausente no payload do webhook.",
           comment: comment.text,
           username: comment.username,
+          userId: comment.userId,
+          commentId: comment.commentId,
           automationId: automation.id,
-        };
+        });
 
         continue;
       }
 
-      const reply = await replyToComment(
-        comment.commentId,
-        message
-      );
+      /**
+       * ------------------------------------------------------
+       * LOCALIZA TENTATIVA ANTERIOR
+       * ------------------------------------------------------
+       */
+      const previousComment =
+        previousComments.find(
+          (item) =>
+            item.commentId === comment.commentId
+        );
 
-      result = {
-        status: reply.sent
-          ? "replied"
-          : "matched_pending",
+      /**
+       * ======================================================
+       * 5. RESPOSTA PÚBLICA
+       * ======================================================
+       */
+      let commentReply: Record<string, unknown>;
+
+      const previousPublicReplySent =
+        previousComment?.comment_reply?.sent === true;
+
+      if (previousPublicReplySent) {
+        /**
+         * Já enviamos anteriormente.
+         *
+         * Não envia novamente.
+         */
+        commentReply = {
+          sent: true,
+          skipped: true,
+          reason:
+            "Resposta pública já enviada anteriormente.",
+        };
+      } else {
+        const publicMessage =
+          automation.static_reply?.trim();
+
+        if (!publicMessage) {
+          eventProcessed = false;
+
+          commentResults.push({
+            status: "matched_pending",
+            reason:
+              "static_reply não configurado",
+            automationId: automation.id,
+            automationName: automation.name,
+            comment: comment.text,
+            username: comment.username,
+            userId: comment.userId,
+            commentId: comment.commentId,
+          });
+
+          continue;
+        }
+
+        commentReply =
+          await replyToComment(
+            comment.commentId,
+            publicMessage
+          );
+
+        /**
+         * Se a resposta pública falhou,
+         * não tentamos a DM.
+         */
+        if (!commentReply.sent) {
+          eventProcessed = false;
+
+          commentResults.push({
+            status: "comment_reply_pending",
+
+            automationId: automation.id,
+            automationName: automation.name,
+
+            keywords: automation.keywords,
+            matchMode: automation.match_mode,
+
+            comment: comment.text,
+            username: comment.username,
+            userId: comment.userId,
+            commentId: comment.commentId,
+
+            comment_reply: commentReply,
+
+            dm: {
+              enabled:
+                automation.dm_enabled === true,
+              sent: false,
+              reason:
+                "DM não enviada porque a resposta pública falhou.",
+            },
+          });
+
+          continue;
+        }
+      }
+
+      /**
+       * ======================================================
+       * 6. PRIVATE REPLY / DM
+       * ======================================================
+       */
+      let dmResult: Record<string, unknown> = {
+        enabled: false,
+        sent: false,
+      };
+
+      if (automation.dm_enabled === true) {
+        const dmMessage =
+          automation.dm_reply?.trim();
+
+        /**
+         * DM ativada mas sem texto.
+         */
+        if (!dmMessage) {
+          eventProcessed = false;
+
+          dmResult = {
+            enabled: true,
+            sent: false,
+            reason:
+              "Mensagem da DM não configurada.",
+          };
+        } else {
+          /**
+           * Verifica se a DM já foi enviada.
+           */
+          const previousDmSent =
+            previousComment?.dm?.sent === true;
+
+          if (previousDmSent) {
+            dmResult = {
+              enabled: true,
+              sent: true,
+              skipped: true,
+              reason:
+                "Private Reply já enviado anteriormente.",
+            };
+          } else {
+            /**
+             * ------------------------------------------------
+             * PRIVATE REPLY REAL
+             * ------------------------------------------------
+             *
+             * IMPORTANTE:
+             *
+             * instagramUserId =
+             * ID DA CONTA PROFISSIONAL
+             *
+             * commentId =
+             * ID DO COMENTÁRIO
+             *
+             * Não usamos userId.
+             */
+            const privateReply =
+              await sendPrivateReply(
+                comment.instagramUserId,
+                comment.commentId,
+                dmMessage
+              );
+
+            dmResult = {
+              enabled: true,
+              ...privateReply,
+            };
+
+            if (!privateReply.sent) {
+              eventProcessed = false;
+            }
+          }
+        }
+      }
+
+      /**
+       * ======================================================
+       * 7. RESULTADO FINAL DO COMENTÁRIO
+       * ======================================================
+       */
+      const publicSent =
+        commentReply.sent === true;
+
+      const dmSent =
+        automation.dm_enabled !== true ||
+        dmResult.sent === true;
+
+      if (!publicSent || !dmSent) {
+        eventProcessed = false;
+      }
+
+      commentResults.push({
+        status:
+          publicSent && dmSent
+            ? "completed"
+            : publicSent
+              ? "comment_replied_dm_pending"
+              : "comment_reply_pending",
 
         automationId: automation.id,
         automationName: automation.name,
@@ -248,23 +728,45 @@ export async function processPendingEvents(limit = 10) {
 
         comment: comment.text,
         username: comment.username,
+        userId: comment.userId,
+
+        /**
+         * ID ORIGINAL DO COMENTÁRIO
+         */
         commentId: comment.commentId,
 
-        reply,
-      };
+        /**
+         * ID DA CONTA PROFISSIONAL
+         */
+        instagramUserId:
+          comment.instagramUserId,
 
-      if (!reply.sent) {
-        processed = false;
-      }
+        comment_reply: commentReply,
+
+        dm: dmResult,
+      });
     }
+
+    /**
+     * ========================================================
+     * 8. SALVA RESULTADO NO SUPABASE
+     * ========================================================
+     */
+    const result = {
+      status: eventProcessed
+        ? "completed"
+        : "pending",
+
+      comments: commentResults,
+    };
 
     const { error: updateError } =
       await supabaseAdmin
         .from("events")
         .update({
-          processed,
+          processed: eventProcessed,
           processing_result: result,
-          processed_at: processed
+          processed_at: eventProcessed
             ? new Date().toISOString()
             : null,
         })
@@ -277,7 +779,7 @@ export async function processPendingEvents(limit = 10) {
     results.push({
       id: event.id,
       ...result,
-      processed,
+      processed: eventProcessed,
     });
   }
 
