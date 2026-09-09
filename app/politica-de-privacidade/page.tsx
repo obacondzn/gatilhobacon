@@ -1,110 +1,195 @@
-# Política de Privacidade — Gatilho
+export default function PoliticaDePrivacidade() {
+  return (
+    <main
+      style={{
+        maxWidth: "900px",
+        margin: "0 auto",
+        padding: "60px 24px",
+        fontFamily: "Arial, sans-serif",
+        lineHeight: 1.7,
+        color: "#222",
+      }}
+    >
+      <h1>Política de Privacidade — Gatilho</h1>
 
-**Última atualização: 8 de setembro de 2026**
+      <p>
+        <strong>Última atualização: 8 de setembro de 2026</strong>
+      </p>
 
-Esta Política de Privacidade descreve como o Gatilho coleta, utiliza, armazena e protege informações relacionadas aos usuários e às contas de redes sociais conectadas ao serviço.
+      <p>
+        Esta Política de Privacidade descreve como o Gatilho coleta, utiliza,
+        armazena e protege informações relacionadas aos usuários e às contas
+        de redes sociais conectadas ao serviço.
+      </p>
 
-O Gatilho é uma plataforma de automação para contas profissionais do Instagram, permitindo configurar fluxos de interação relacionados a comentários e mensagens.
+      <p>
+        O Gatilho é uma plataforma de automação para contas profissionais do
+        Instagram, permitindo configurar fluxos de interação relacionados a
+        comentários e mensagens.
+      </p>
 
-## 1. Dados que podemos coletar
+      <h2>1. Dados que podemos coletar</h2>
 
-Dependendo das funcionalidades utilizadas, o Gatilho poderá receber e processar dados disponibilizados pelas plataformas da Meta, incluindo:
+      <p>
+        Dependendo das funcionalidades utilizadas, o Gatilho poderá receber e
+        processar dados disponibilizados pelas plataformas da Meta, incluindo:
+      </p>
 
-* informações básicas da conta profissional do Instagram conectada;
-* nome de usuário e identificadores da conta;
-* informações relacionadas a comentários recebidos nas publicações e Reels;
-* conteúdo de mensagens enviadas à conta conectada;
-* identificadores necessários para associar eventos à conta conectada;
-* informações relacionadas às automações configuradas pelo usuário;
-* registros técnicos necessários para funcionamento, segurança e diagnóstico do serviço.
+      <ul>
+        <li>Informações básicas da conta profissional do Instagram conectada.</li>
+        <li>Nome de usuário e identificadores da conta.</li>
+        <li>Informações relacionadas a comentários recebidos.</li>
+        <li>Conteúdo de mensagens enviadas à conta conectada.</li>
+        <li>Identificadores necessários para associar eventos à conta.</li>
+        <li>Informações relacionadas às automações configuradas.</li>
+        <li>Registros técnicos necessários para funcionamento e segurança.</li>
+      </ul>
 
-O Gatilho não solicita nem armazena senhas do Instagram ou do Facebook.
+      <p>
+        O Gatilho não solicita nem armazena senhas do Instagram ou do Facebook.
+      </p>
 
-## 2. Como utilizamos os dados
+      <h2>2. Como utilizamos os dados</h2>
 
-Os dados recebidos são utilizados exclusivamente para fornecer as funcionalidades do Gatilho, incluindo:
+      <p>Os dados recebidos são utilizados para fornecer as funcionalidades do Gatilho, incluindo:</p>
 
-* conectar e identificar uma conta profissional do Instagram;
-* receber e processar eventos de comentários;
-* identificar palavras-chave configuradas pelo usuário;
-* processar mensagens recebidas pela conta conectada;
-* executar automações configuradas pelo proprietário da conta;
-* apresentar informações e eventos no painel do serviço;
-* manter a segurança, estabilidade e funcionamento da plataforma;
-* diagnosticar erros e melhorar a confiabilidade do serviço.
+      <ul>
+        <li>Conectar e identificar uma conta profissional do Instagram.</li>
+        <li>Receber e processar eventos de comentários.</li>
+        <li>Identificar palavras-chave configuradas pelo usuário.</li>
+        <li>Processar mensagens recebidas pela conta conectada.</li>
+        <li>Executar automações configuradas pelo proprietário da conta.</li>
+        <li>Apresentar eventos e informações no painel do serviço.</li>
+        <li>Manter a segurança e estabilidade da plataforma.</li>
+        <li>Diagnosticar erros e melhorar a confiabilidade do serviço.</li>
+      </ul>
 
-O Gatilho não vende dados pessoais dos usuários.
+      <p>
+        O Gatilho não vende dados pessoais dos usuários.
+      </p>
 
-## 3. Dados do Instagram e da Meta
+      <h2>3. Dados do Instagram e da Meta</h2>
 
-Quando o usuário conecta uma conta profissional do Instagram, o Gatilho poderá receber dados disponibilizados pela Meta por meio das APIs e permissões autorizadas pelo usuário.
+      <p>
+        Quando o usuário conecta uma conta profissional do Instagram, o
+        Gatilho poderá receber dados disponibilizados pela Meta por meio das
+        APIs e permissões autorizadas pelo usuário.
+      </p>
 
-Esses dados são utilizados somente para as finalidades descritas nesta Política de Privacidade e necessárias para fornecer as funcionalidades solicitadas.
+      <p>
+        Esses dados são utilizados somente para as finalidades necessárias
+        para fornecer as funcionalidades solicitadas.
+      </p>
 
-O Gatilho não utiliza os dados recebidos da Meta para finalidades incompatíveis com as funcionalidades do serviço.
+      <h2>4. Armazenamento e segurança</h2>
 
-## 4. Armazenamento e segurança
+      <p>
+        Os dados podem ser armazenados em serviços de infraestrutura,
+        hospedagem, banco de dados e outros provedores tecnológicos utilizados
+        para operar o Gatilho.
+      </p>
 
-Os dados podem ser armazenados em serviços de infraestrutura e provedores de tecnologia utilizados para operar o Gatilho.
+      <p>
+        Adotamos medidas técnicas e organizacionais razoáveis para proteger os
+        dados contra acesso não autorizado, alteração, divulgação ou destruição.
+      </p>
 
-Adotamos medidas técnicas e organizacionais razoáveis para proteger os dados contra acesso não autorizado, alteração, divulgação ou destruição.
+      <h2>5. Compartilhamento de dados</h2>
 
-O acesso aos dados é limitado aos serviços e pessoas que necessitem dessas informações para operar, manter ou proteger o Gatilho.
+      <p>
+        O Gatilho poderá utilizar provedores de infraestrutura, hospedagem,
+        banco de dados e outros serviços técnicos necessários para disponibilizar
+        a plataforma.
+      </p>
 
-## 5. Compartilhamento de dados
+      <p>
+        Esses provedores somente terão acesso aos dados necessários para
+        prestar os serviços correspondentes.
+      </p>
 
-O Gatilho poderá utilizar provedores de infraestrutura, hospedagem, banco de dados e outros serviços técnicos necessários para disponibilizar a plataforma.
+      <p>
+        Não vendemos ou comercializamos dados pessoais recebidos através do
+        Instagram ou de outras plataformas da Meta.
+      </p>
 
-Esses provedores somente terão acesso aos dados necessários para prestar os serviços correspondentes.
+      <h2>6. Retenção de dados</h2>
 
-Não vendemos ou comercializamos dados pessoais recebidos através do Instagram ou de outras plataformas da Meta.
+      <p>
+        Os dados são mantidos pelo período necessário para fornecer as
+        funcionalidades do Gatilho, cumprir obrigações legais, resolver
+        disputas, prevenir abusos e manter a segurança da plataforma.
+      </p>
 
-## 6. Retenção de dados
+      <h2>7. Exclusão dos dados</h2>
 
-Os dados são mantidos pelo período necessário para fornecer as funcionalidades do Gatilho, cumprir obrigações legais, resolver disputas, prevenir abusos e manter a segurança da plataforma.
+      <p>
+        O usuário pode solicitar a exclusão dos dados associados à sua conta e
+        à utilização do Gatilho.
+      </p>
 
-Quando os dados não forem mais necessários para essas finalidades, eles poderão ser excluídos ou anonimizados, de acordo com as obrigações legais aplicáveis.
+      <p>
+        Para solicitar a exclusão, entre em contato pelo endereço de e-mail
+        disponibilizado na seção de contato desta política.
+      </p>
 
-## 7. Exclusão dos dados
+      <p>
+        Após receber uma solicitação válida, analisaremos o pedido e
+        excluiremos os dados que não precisem ser mantidos por obrigação legal
+        ou outra finalidade legítima aplicável.
+      </p>
 
-O usuário pode solicitar a exclusão dos dados associados à sua conta e à utilização do Gatilho.
+      <p>
+        A desconexão da conta do Instagram também poderá interromper o
+        recebimento de novos dados através da integração.
+      </p>
 
-Para solicitar a exclusão, envie uma solicitação para:
+      <h2>8. Direitos dos usuários</h2>
 
-**[SEU E-MAIL DE PRIVACIDADE]**
+      <p>
+        Dependendo da legislação aplicável, os usuários poderão solicitar
+        informações sobre os dados tratados, correção de informações
+        incorretas, exclusão de dados e outras medidas relacionadas à proteção
+        de seus dados pessoais.
+      </p>
 
-No pedido, informe o nome de usuário ou a conta utilizada no Gatilho e, quando aplicável, a conta do Instagram conectada.
+      <h2>9. Cookies e tecnologias semelhantes</h2>
 
-Após recebermos uma solicitação válida, analisaremos o pedido e excluiremos os dados que não precisem ser mantidos por obrigação legal ou por outra finalidade legítima aplicável.
+      <p>
+        O Gatilho poderá utilizar cookies, armazenamento local e tecnologias
+        semelhantes para manter sessões, autenticar usuários, garantir o
+        funcionamento da plataforma e melhorar a segurança do serviço.
+      </p>
 
-A desconexão da conta do Instagram também poderá interromper o recebimento de novos dados através da integração.
+      <h2>10. Alterações nesta Política</h2>
 
-## 8. Direitos dos usuários
+      <p>
+        Esta Política de Privacidade poderá ser atualizada periodicamente para
+        refletir alterações no Gatilho, nas funcionalidades oferecidas ou nas
+        exigências legais.
+      </p>
 
-Dependendo da legislação aplicável, os usuários poderão solicitar informações sobre os dados tratados, correção de informações incorretas, exclusão de dados e outras medidas relacionadas à proteção de seus dados pessoais.
+      <h2>11. Contato</h2>
 
-As solicitações podem ser encaminhadas pelo contato informado nesta Política.
+      <p>
+        Para dúvidas, solicitações relacionadas à privacidade ou pedidos de
+        exclusão de dados, entre em contato:
+      </p>
 
-## 9. Cookies e tecnologias semelhantes
+      <p>
+        <strong>E-mail:</strong> SEU_EMAIL_AQUI
+      </p>
 
-O Gatilho poderá utilizar cookies, armazenamento local e tecnologias semelhantes para manter sessões, autenticar usuários, garantir o funcionamento da plataforma e melhorar a segurança do serviço.
+      <p>
+        <strong>Aplicativo:</strong> Gatilho
+        <br />
+        <strong>Website:</strong> https://gatilhobacon.vercel.app/
+      </p>
 
-## 10. Alterações nesta Política
+      <hr />
 
-Esta Política de Privacidade poderá ser atualizada periodicamente para refletir alterações no Gatilho, nas funcionalidades oferecidas ou nas exigências legais.
-
-A versão mais recente estará sempre disponível nesta página.
-
-## 11. Contato
-
-Para dúvidas, solicitações relacionadas à privacidade ou pedidos de exclusão de dados, entre em contato:
-
-**E-mail:** [SEU E-MAIL]
-
-**Aplicativo:** Gatilho
-
-**Website:** https://gatilhobacon.vercel.app/
-
----
-
-**Esta Política de Privacidade entra em vigor em 8 de setembro de 2026.**
+      <p>
+        Esta Política de Privacidade entra em vigor em 8 de setembro de 2026.
+      </p>
+    </main>
+  );
+}
